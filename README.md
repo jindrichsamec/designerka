@@ -20,6 +20,9 @@ kapsulovému šatníku. Nahrazuje kopírování snímků v Canvě.
 s referenčními obrázky: fotka obličeje + kresba outfitu jako PNG. Appka žádnou AI nevolá, vše se
 jen kopíruje nebo stahuje. Texty promptu jsou v `src/data/prompt.ts`.
 
+Běží na <https://jindrichsamec.github.io/designerka/> – každý push do `main` ji znovu sestaví a nasadí
+(`.github/workflows/deploy.yml`).
+
 ## Spuštění
 
 ```sh
