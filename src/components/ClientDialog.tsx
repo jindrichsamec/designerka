@@ -79,7 +79,7 @@ function CropEditor(props: { photo: Photo; crop: Crop; onChange: (c: Crop) => vo
 export function ClientDialog(props: {
   client: Client | null // null = creating a new one
   photo: Photo | null
-  onSave: (data: { name: string; crop: Crop; file: Blob | null }) => void
+  onSave: (data: { name: string; crop: Crop; file: Blob | null }) => void | Promise<void>
   onDelete?: () => void
   onClose?: () => void // absent when there is nothing to go back to
 }) {
@@ -118,9 +118,17 @@ export function ClientDialog(props: {
       <form
         className="dialog"
         onClick={(e) => e.stopPropagation()}
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
-          props.onSave({ name: name.trim() || 'Bez jména', crop, file: picked?.blob ?? null })
+          setBusy(true)
+          setError(null)
+          try {
+            await props.onSave({ name: name.trim() || 'Bez jména', crop, file: picked?.blob ?? null })
+            // on success the parent closes the dialog
+          } catch {
+            setError('Fotku se nepodařilo uložit. Zkus to znovu nebo mimo anonymní režim.')
+            setBusy(false)
+          }
         }}
       >
         <h2>{client ? 'Klientka' : 'Nová klientka'}</h2>

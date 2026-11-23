@@ -111,11 +111,21 @@ async function tx<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRe
   })
 }
 
-export const putPhoto = (clientId: string, blob: Blob) =>
-  tx('readwrite', (s) => s.put(blob, clientId))
+// Safari's private mode refuses Blobs in IndexedDB, so photos are stored as raw bytes.
+type StoredPhoto = { data: ArrayBuffer; type: string }
+
+export async function putPhoto(clientId: string, blob: Blob) {
+  // read the bytes first: awaiting inside a transaction would let it auto-commit
+  const record: StoredPhoto = { data: await blob.arrayBuffer(), type: blob.type }
+  await tx('readwrite', (s) => s.put(record, clientId))
+}
 export const deletePhoto = (clientId: string) => tx('readwrite', (s) => s.delete(clientId))
-const getPhoto = (clientId: string) =>
-  tx<Blob | undefined>('readonly', (s) => s.get(clientId))
+async function getPhoto(clientId: string): Promise<Blob | undefined> {
+  const stored = await tx<Blob | StoredPhoto | undefined>('readonly', (s) => s.get(clientId))
+  // photos saved by earlier versions are plain Blobs
+  if (!stored || stored instanceof Blob) return stored
+  return new Blob([stored.data], { type: stored.type })
+}
 
 export type Photo = { url: string; aspect: number }
 
